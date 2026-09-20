@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AquaSense Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef7f8;
+            text-align: center;
+        }
+
+        header {
+            background: #087f8c;
+            color: white;
+            padding: 25px;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .status {
+            margin: 25px auto;
+            background: white;
+            padding: 15px;
+            max-width: 500px;
+            border-radius: 12px;
+        }
+
+        .cards {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            width: 220px;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 15px;
+        }
+
+        .status-text {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🌊 AquaSense</h1>
+        <p>Real-Time Freshwater Water Quality Monitoring</p>
+    </header>
+
+    <div class="status">
+        Device Status:
+        <span id="deviceStatus">CONNECTING...</span>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h2>pH</h2>
+            <div id="phValue" class="value">--</div>
+            <p>Sensor Voltage</p>
+        </div>
+
+        <div class="card">
+            <h2>Turbidity</h2>
+            <div id="turbidityValue" class="value">--</div>
+            <p>Sensor Voltage</p>
+
+            <div id="turbidityStatus" class="status-text">
+                --
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Temperature</h2>
+            <div id="temperatureValue" class="value">--</div>
+            <p>°C</p>
+        </div>
+
+    </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB_KM24oNLB_WwyBpzIpQ-jsXqWeijTBrQ",
+    authDomain: "aquasense-261e2.firebaseapp.com",
+    databaseURL: "https://aquasense-261e2-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "aquasense-261e2",
+    storageBucket: "aquasense-261e2.firebasestorage.app",
+    messagingSenderId: "695186906146",
+    appId: "1:695186906146:web:28b1104b6b55b5e5e93e7b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  const latestRef = ref(database, "aquasense/latest");
+
+  onValue(latestRef, (snapshot) => {
+
+    const data = snapshot.val();
+
+    if (data) {
+
+      document.getElementById("deviceStatus").textContent = "ONLINE";
+
+      document.getElementById("phValue").textContent =
+        data.pHVoltage ?? "--";
+
+      document.getElementById("turbidityValue").textContent =
+        data.turbidityVoltage ?? "--";
+
+      document.getElementById("turbidityStatus").textContent =
+        data.turbidityStatus ?? "--";
+
+      document.getElementById("temperatureValue").textContent =
+        data.temperature ?? "--";
+
+    } else {
+
+      document.getElementById("deviceStatus").textContent =
+        "NO DATA";
+    }
+  });
+</script>
+</body>
+
+</html>

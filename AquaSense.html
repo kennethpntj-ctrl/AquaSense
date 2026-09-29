@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaSense | Water Quality Monitoring</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#eef8fb;
+  color:#123b55;
+}
+
+header{
+  background:linear-gradient(135deg,#087d9a,#0c5f7c);
+  color:white;
+  padding:22px 5%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.brand h1{
+  margin:0;
+  font-size:32px;
+}
+
+.brand p{
+  margin:5px 0 0;
+  opacity:.9;
+}
+
+.top-info{
+  display:flex;
+  gap:30px;
+  font-size:14px;
+}
+
+.online{
+  color:#b7ffcf;
+  font-weight:bold;
+  font-size:17px;
+}
+
+main{
+  width:92%;
+  max-width:1250px;
+  margin:25px auto 40px;
+}
+
+.section{
+  background:white;
+  border-radius:16px;
+  padding:22px;
+  margin-bottom:20px;
+  box-shadow:0 4px 18px rgba(0,0,0,.06);
+}
+
+.section h2{
+  margin-top:0;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+
+.card{
+  border-radius:14px;
+  padding:22px;
+  border:1px solid #dcecf1;
+}
+
+.ph-card{background:#eff8ff}
+.turb-card{background:#effbf4}
+.temp-card{background:#fff8ed}
+
+.label{
+  font-weight:bold;
+}
+
+.value{
+  font-size:32px;
+  font-weight:bold;
+  margin-top:12px;
+}
+
+.sub{
+  margin-top:5px;
+  color:#567181;
+}
+
+.chart-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+
+.chart-box{
+  border:1px solid #dcecf1;
+  border-radius:14px;
+  padding:15px;
+  height:300px;
+}
+
+.chart-box canvas{
+  width:100%!important;
+  height:235px!important;
+}
+
+.bottom-grid{
+  display:grid;
+  grid-template-columns:1.2fr .8fr;
+  gap:20px;
+}
+
+select{
+  padding:11px 15px;
+  border:1px solid #b8d8e2;
+  border-radius:9px;
+  font-size:16px;
+  background:white;
+  color:#123b55;
+  margin:5px 0 18px;
+}
+
+.average-cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.average{
+  padding:16px;
+  border-radius:12px;
+  background:#f5fafc;
+  border:1px solid #dcecf1;
+}
+
+.average strong{
+  display:block;
+  font-size:25px;
+  margin-top:8px;
+}
+
+.summary{
+  border:1px solid #bfe7d0;
+  background:#effbf4;
+  border-radius:14px;
+  padding:22px;
+}
+
+.stable{
+  color:#14804a;
+  font-size:24px;
+  font-weight:bold;
+}
+
+.changing{
+  color:#a15b00;
+  font-size:24px;
+  font-weight:bold;
+}
+
+.summary p{
+  color:#526b78;
+  line-height:1.5;
+}
+
+.note{
+  font-size:13px;
+  color:#687f8b;
+  margin-top:12px;
+}
+
+footer{
+  text-align:center;
+  padding:22px;
+  background:#075c73;
+  color:white;
+}
+
+@media(max-width:850px){
+  .cards,
+  .chart-grid,
+  .bottom-grid,
+  .average-cards{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="brand">
+<h1>💧 AquaSense</h1>
+<p>Water Quality Monitoring System</p>
+</div>
+
+<div class="top-info">
+
+<div>
+System Status<br>
+<span id="systemStatus" class="online">CONNECTING...</span>
+</div>
+
+<div>
+Last Update<br>
+<strong id="lastUpdate">--</strong>
+</div>
+
+</div>
+
+</header>
+
+
+<main>
+
+<!-- CURRENT CONDITION -->
+
+<section class="section">
+
+<h2>🌊 Current Water Condition</h2>
+
+<div class="cards">
+
+<div class="card ph-card">
+<div class="label">pH</div>
+<div class="value" id="currentPH">--</div>
+<div class="sub">Current pH reading</div>
+</div>
+
+<div class="card turb-card">
+<div class="label">Turbidity</div>
+<div class="value" id="currentTurb">--</div>
+<div class="sub">Current turbidity condition</div>
+</div>
+
+<div class="card temp-card">
+<div class="label">Temperature</div>
+<div class="value" id="currentTemp">--</div>
+<div class="sub">Current water temperature</div>
+</div>
+
+</div>
+</section>
+
+
+<!-- TREND -->
+
+<section class="section">
+
+<h2>📈 Water Quality Trend</h2>
+
+<div class="chart-grid">
+
+<div class="chart-box">
+<h3>pH Trend</h3>
+<canvas id="phChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Turbidity Trend</h3>
+<canvas id="turbChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h3>Temperature Trend</h3>
+<canvas id="tempChart"></canvas>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- AVERAGE -->
+
+<section class="section">
+
+<h2>📊 Average Reading</h2>
+
+<label><strong>View:</strong></label><br>
+
+<select id="viewSelect">
+
+<option value="minute">Minute</option>
+<option value="hour" selected>Hourly</option>
+<option value="day">Daily</option>
+<option value="month">Monthly</option>
+<option value="year">Yearly</option>
+
+</select>
+
+
+<div class="average-cards">
+
+<div class="average">
+pH Average
+<strong id="avgPH">--</strong>
+</div>
+
+<div class="average">
+Turbidity Average
+<strong id="avgTurb">--</strong>
+</div>
+
+<div class="average">
+Temperature Average
+<strong id="avgTemp">--</strong>
+</div>
+
+</div>
+
+
+<div class="note">
+Averages are calculated automatically from the stored history.
+Raw history is not deleted.
+</div>
+
+</section>
+
+
+<!-- SUMMARY -->
+
+<section class="section">
+
+<h2>💡 Summary</h2>
+
+<div class="summary">
+
+<div id="summaryStatus" class="stable">
+Status: --
+</div>
+
+<p id="summaryText">
+Waiting for enough readings.
+</p>
+
+</div>
+
+</section>
+
+</main>
+
+
+<footer>
+AquaSense Water Quality Monitoring System
+</footer>
+
+
+<script type="module">
+
+import {
+initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+onValue
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+// =====================================================
+// FIREBASE
+// =====================================================
+
+const firebaseConfig = {
+
+apiKey:"AIzaSyB_KM24oNLB_WwyBpzIpQ-jsXqWeijTBrQ",
+
+authDomain:
+"aquasense-261e2.firebaseapp.com",
+
+databaseURL:
+"https://aquasense-261e2-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+projectId:
+"aquasense-261e2",
+
+storageBucket:
+"aquasense-261e2.firebasestorage.app",
+
+messagingSenderId:
+"695186906146",
+
+appId:
+"1:695186906146:web:28b1104b6b55b5e5e93e7b",
+
+measurementId:
+"G-L0DS66DEGH"
+
+};
+
+
+const app=initializeApp(firebaseConfig);
+
+const db=getDatabase(app);
+
+
+// =====================================================
+// DATA
+// =====================================================
+
+let historyData={};
+
+let latestData=null;
+
+let phChart;
+let turbChart;
+let tempChart;
+
+
+// =====================================================
+// DATE
+// =====================================================
+
+function parseDate(timestamp){
+
+if(!timestamp)return null;
+
+const d=new Date(
+String(timestamp).replace(" ","T")
+);
+
+return isNaN(d.getTime())?null:d;
+
+}
+
+
+// =====================================================
+// TURBIDITY CLASSIFICATION
+// SAME THRESHOLDS AS AQUASENSE
+// =====================================================
+
+function getTurbidityStatus(voltage){
+
+if(voltage>=1.543)
+return "CLEAN";
+
+if(voltage>=0.744)
+return "SLIGHTLY TURBID";
+
+return "HIGHLY TURBID";
+
+}
+
+
+// =====================================================
+// CURRENT READING
+// =====================================================
+
+function updateLatest(data){
+
+latestData=data;
+
+if(!data)return;
+
+
+document.getElementById("currentPH")
+.textContent=
+Number(data.pH).toFixed(2);
+
+
+document.getElementById("currentTurb")
+.textContent=
+data.turbidityStatus || "--";
+
+
+if(data.temperature!=null){
+
+document.getElementById("currentTemp")
+.textContent=
+Number(data.temperature).toFixed(2)
++" °C";
+
+}
+
+
+document.getElementById("lastUpdate")
+.textContent=
+data.timestamp || "--";
+
+
+document.getElementById("systemStatus")
+.textContent=
+"ONLINE";
+
+}
+
+
+// =====================================================
+// GROUP READINGS
+// =====================================================
+
+function getGroupKey(date,view){
+
+const y=date.getFullYear();
+
+const m=String(
+date.getMonth()+1
+).padStart(2,"0");
+
+const d=String(
+date.getDate()
+).padStart(2,"0");
+
+const h=String(
+date.getHours()
+).padStart(2,"0");
+
+const min=String(
+date.getMinutes()
+).padStart(2,"0");
+
+
+if(view==="minute")
+return `${y}-${m}-${d} ${h}:${min}`;
+
+if(view==="hour")
+return `${y}-${m}-${d} ${h}:00`;
+
+if(view==="day")
+return `${y}-${m}-${d}`;
+
+if(view==="month")
+return `${y}-${m}`;
+
+return `${y}`;
+
+}
+
+
+// =====================================================
+// AUTOMATIC AVERAGE
+// =====================================================
+
+function calculateAverages(view){
+
+const groups={};
+
+
+Object.values(historyData)
+.forEach(item=>{
+
+const date=
+parseDate(item.timestamp);
+
+if(!date)return;
+
+
+const key=
+getGroupKey(date,view);
+
+
+if(!groups[key]){
+
+groups[key]={
+
+key:key,
+
+date:date,
+
+pHSum:0,
+pHCount:0,
+
+turbSum:0,
+turbCount:0,
+
+tempSum:0,
+tempCount:0
+
+};
+
+}
+
+
+const g=groups[key];
+
+
+if(item.pH!=null){
+
+g.pHSum+=Number(item.pH);
+
+g.pHCount++;
+
+}
+
+
+if(item.turbidityVoltage!=null){
+
+g.turbSum+=
+Number(item.turbidityVoltage);
+
+g.turbCount++;
+
+}
+
+
+if(item.temperature!=null){
+
+g.tempSum+=
+Number(item.temperature);
+
+g.tempCount++;
+
+}
+
+});
+
+
+return Object.values(groups)
+
+.map(g=>({
+
+key:g.key,
+
+date:g.date,
+
+pH:g.pHCount?
+g.pHSum/g.pHCount:null,
+
+turbidityVoltage:
+g.turbCount?
+g.turbSum/g.turbCount:null,
+
+temperature:
+g.tempCount?
+g.tempSum/g.tempCount:null
+
+}))
+
+.sort(
+(a,b)=>a.date-b.date
+);
+
+}
+
+
+// =====================================================
+// DISPLAY AVERAGE
+// =====================================================
+
+function updateAverage(){
+
+const view=
+document.getElementById("viewSelect")
+.value;
+
+const groups=
+calculateAverages(view);
+
+
+if(groups.length===0)return;
+
+
+const latest=
+groups[groups.length-1];
+
+
+document.getElementById("avgPH")
+.textContent=
+latest.pH!=null?
+latest.pH.toFixed(2):
+"--";
+
+
+document.getElementById("avgTurb")
+.textContent=
+latest.turbidityVoltage!=null?
+getTurbidityStatus(
+latest.turbidityVoltage
+):
+"--";
+
+
+document.getElementById("avgTemp")
+.textContent=
+latest.temperature!=null?
+latest.temperature.toFixed(2)+" °C":
+"--";
+
+
+updateSummary(groups);
+
+}
+
+
+// =====================================================
+// SIMPLE SUMMARY
+// =====================================================
+
+function updateSummary(groups){
+
+const recent=
+groups.slice(-5);
+
+if(recent.length<2)return;
+
+
+const pH=
+recent
+.map(x=>x.pH)
+.filter(x=>x!=null);
+
+
+const temp=
+recent
+.map(x=>x.temperature)
+.filter(x=>x!=null);
+
+
+const turb=
+recent
+.map(x=>x.turbidityVoltage)
+.filter(x=>x!=null);
+
+
+const phRange=
+pH.length?
+Math.max(...pH)-Math.min(...pH):
+0;
+
+
+const tempRange=
+temp.length?
+Math.max(...temp)-Math.min(...temp):
+0;
+
+
+const statuses=
+turb.map(
+getTurbidityStatus
+);
+
+
+const turbStable=
+statuses.length>0 &&
+statuses.every(
+x=>x===statuses[0]
+);
+
+
+const stable=
+phRange<=0.30 &&
+tempRange<=1.50 &&
+turbStable;
+
+
+const status=
+document.getElementById(
+"summaryStatus"
+);
+
+const text=
+document.getElementById(
+"summaryText"
+);
+
+
+if(stable){
+
+status.textContent=
+"Status: Stable";
+
+status.className="stable";
+
+text.textContent=
+"The recorded values remained relatively consistent during the selected period.";
+
+}else{
+
+status.textContent=
+"Status: Changing";
+
+status.className="changing";
+
+text.textContent=
+"The recorded values showed noticeable changes during the selected period.";
+
+}
+
+}
+
+
+// =====================================================
+// CHARTS
+// =====================================================
+
+function createCharts(){
+
+const options={
+
+responsive:true,
+
+maintainAspectRatio:false,
+
+animation:false
+
+};
+
+
+phChart=new Chart(
+
+document.getElementById("phChart"),
+
+{
+
+type:"line",
+
+data:{
+
+labels:[],
+
+datasets:[{
+
+label:"pH",
+
+data:[],
+
+borderWidth:2,
+
+tension:.25,
+
+pointRadius:2
+
+}]
+
+},
+
+options:options
+
+}
+
+);
+
+
+turbChart=new Chart(
+
+document.getElementById("turbChart"),
+
+{
+
+type:"line",
+
+data:{
+
+labels:[],
+
+datasets:[{
+
+label:"Turbidity Voltage",
+
+data:[],
+
+borderWidth:2,
+
+tension:.25,
+
+pointRadius:2
+
+}]
+
+},
+
+options:options
+
+}
+
+);
+
+
+tempChart=new Chart(
+
+document.getElementById("tempChart"),
+
+{
+
+type:"line",
+
+data:{
+
+labels:[],
+
+datasets:[{
+
+label:"Temperature °C",
+
+data:[],
+
+borderWidth:2,
+
+tension:.25,
+
+pointRadius:2
+
+}]
+
+},
+
+options:options
+
+}
+
+);
+
+}
+
+
+// =====================================================
+// UPDATE CHARTS
+// =====================================================
+
+function updateCharts(){
+
+const view=
+document.getElementById("viewSelect")
+.value;
+
+const groups=
+calculateAverages(view);
+
+
+// Only display latest 30 summarized groups
+
+const display=
+groups.slice(-30);
+
+
+const labels=
+display.map(x=>x.key);
+
+
+phChart.data.labels=labels;
+
+phChart.data.datasets[0].data=
+display.map(x=>x.pH);
+
+phChart.update();
+
+
+turbChart.data.labels=labels;
+
+turbChart.data.datasets[0].data=
+display.map(
+x=>x.turbidityVoltage
+);
+
+turbChart.update();
+
+
+tempChart.data.labels=labels;
+
+tempChart.data.datasets[0].data=
+display.map(
+x=>x.temperature
+);
+
+tempChart.update();
+
+}
+
+
+// =====================================================
+// REFRESH
+// =====================================================
+
+function refresh(){
+
+updateAverage();
+
+updateCharts();
+
+}
+
+
+// =====================================================
+// DROPDOWN
+// =====================================================
+
+document
+.getElementById("viewSelect")
+.addEventListener(
+"change",
+refresh
+);
+
+
+// =====================================================
+// FIREBASE LATEST
+// =====================================================
+
+const latestRef=
+ref(
+db,
+"aquasense/latest"
+);
+
+
+onValue(
+
+latestRef,
+
+snapshot=>{
+
+updateLatest(
+snapshot.val()
+);
+
+},
+
+error=>{
+
+console.error(error);
+
+document.getElementById(
+"systemStatus"
+).textContent=
+"OFFLINE";
+
+}
+
+);
+
+
+// =====================================================
+// FIREBASE HISTORY
+// =====================================================
+
+const historyRef=
+ref(
+db,
+"aquasense/history"
+);
+
+
+onValue(
+
+historyRef,
+
+snapshot=>{
+
+historyData=
+snapshot.val() || {};
+
+refresh();
+
+},
+
+error=>{
+
+console.error(error);
+
+}
+
+);
+
+
+// =====================================================
+// START
+// =====================================================
+
+createCharts();
+
+</script>
+
+</body>
+</html>
